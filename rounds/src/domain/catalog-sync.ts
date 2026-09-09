@@ -2,7 +2,13 @@ import type { Catalog, RevisionCard } from "./content";
 import { assertCatalog } from "./catalog-validation.ts";
 
 export type CatalogPolicy = { allowPreview?: boolean };
-export type CatalogSnapshot = { schemaVersion: 1; kind: "full"; revision: number; catalog: Catalog; channel?: "reviewed" | "preview" };
+export type CatalogSnapshot = {
+  schemaVersion: 1;
+  kind: "full";
+  revision: number;
+  catalog: Catalog;
+  channel?: "reviewed" | "preview" | "public";
+};
 export type CatalogUpdate = CatalogSnapshot | {
   schemaVersion: 1;
   kind: "delta";
@@ -11,7 +17,7 @@ export type CatalogUpdate = CatalogSnapshot | {
   // Complete subject/topic metadata, with only changed/new cards.
   catalog: Catalog;
   removedCardIds: string[];
-  channel?: "reviewed" | "preview";
+  channel?: "reviewed" | "preview" | "public";
 };
 export class CatalogBaseMismatch extends Error {}
 const revision = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) >= 1;
@@ -21,9 +27,14 @@ export function parseCatalogUpdate(value: unknown, policy: CatalogPolicy = {}): 
   const v = value as CatalogUpdate;
   if (v.schemaVersion !== 1 || !["full", "delta"].includes(v.kind) || !revision(v.revision))
     throw new Error("Invalid catalog envelope");
-  if (v.channel !== undefined && !["reviewed", "preview"].includes(v.channel)) throw new Error("Invalid content channel");
-  if (v.channel === "preview" && !policy.allowPreview) throw new Error("Preview content is disabled in this build");
-  assertCatalog(v.catalog, { requireReviewed: v.channel !== "preview" });
+  if (v.channel !== undefined && !["reviewed", "preview", "public"].includes(v.channel))
+    throw new Error("Invalid content channel");
+  if (v.channel === "preview" && !policy.allowPreview)
+    throw new Error("Preview content is disabled in this build");
+  // "public" is the simple five-field catalog used by the released app.
+  // The stricter "reviewed" channel remains available if an editorial workflow
+  // is introduced later, without forcing those extra fields into today's editor.
+  assertCatalog(v.catalog, { requireReviewed: v.channel === "reviewed" });
   if (v.kind === "delta" && (!revision(v.baseRevision) || v.revision <= v.baseRevision ||
     !Array.isArray(v.removedCardIds) || !v.removedCardIds.every(id => typeof id === "string" && !!id.trim()) ||
     new Set(v.removedCardIds).size !== v.removedCardIds.length ||
@@ -57,7 +68,12 @@ export function mergeCatalogUpdate(current: CatalogSnapshot | null, payload: unk
     for (const card of update.catalog.cards) oldCards.set(card.id, card);
     catalog = { ...catalog, cards: [...oldCards.values()] };
   }
-  assertCatalog(catalog, { requireReviewed: update.channel !== "preview" });
-  return { schemaVersion: 1, kind: "full", revision: update.revision, catalog,
-    ...(update.channel ? { channel: update.channel } : {}) };
+  assertCatalog(catalog, { requireReviewed: update.channel === "reviewed" });
+  return {
+    schemaVersion: 1,
+    kind: "full",
+    revision: update.revision,
+    catalog,
+    ...(update.channel ? { channel: update.channel } : {}),
+  };
 }
