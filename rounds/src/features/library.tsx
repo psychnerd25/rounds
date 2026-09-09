@@ -74,8 +74,7 @@ export default function Library({ saved = false }: { saved?: boolean }) {
           {savedCards.map((card) => (
             <Panel key={card.id} style={{ gap: 14 }}>
               <Eyebrow>
-                {subjects.find((s) => s.id === card.subjectId)?.name} ·{" "}
-                {card.seconds} sec
+                {subjects.find((s) => s.id === card.subjectId)?.name}
               </Eyebrow>
               <Copy style={{ fontFamily: serif, fontSize: 25, lineHeight: 32 }}>
                 {card.title}
@@ -166,7 +165,7 @@ export default function Library({ saved = false }: { saved?: boolean }) {
                       </Copy>
                       <Copy style={s.muted}>
                         {sub.topics.length
-                          ? `${sub.topics.length} topics · ${cards.filter((c) => c.subjectId === sub.id).length} clinical cards`
+                          ? `${sub.topics.length} topics · ${cards.filter((c) => c.subjectId === sub.id).length} cards`
                           : "Content in preparation"}
                       </Copy>
                     </View>
@@ -193,7 +192,7 @@ export default function Library({ saved = false }: { saved?: boolean }) {
                     ) : (
                       <Copy style={s.muted}>
                         This rotation is ready for a curated collection. No
-                        clinical cards have been added yet.
+                        cards have been added yet.
                       </Copy>
                     )}
                   </View>
@@ -204,7 +203,7 @@ export default function Library({ saved = false }: { saved?: boolean }) {
             match(`${sub.name} ${sub.topics.join(" ")}`),
           ) && <Copy>No rotations match your search.</Copy>}
           <Copy style={{ color: palette.muted, fontSize: 11 }}>
-            A growing library, built from the local Rounds content bank.
+            A growing library from Rounds by dailydose.md_.
           </Copy>
         </>
       )}
