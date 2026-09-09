@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { CardReferences } from "./card-references";
-import { Linking, Modal, Pressable, ScrollView, View } from "react-native";
+import { Modal, Pressable, ScrollView, View } from "react-native";
 import type { RevisionCard } from "../../domain/content";
 import { useContent } from "../../state/content";
 import { useReducedMotion } from "../../hooks/use-reduced-motion";
 import { useStudy } from "../../state/study";
 import { Button, Copy, Eyebrow, serif, useRoundsTheme } from "./ui";
+
 export function ShortCard({
   card,
   recall,
@@ -21,27 +21,19 @@ export function ShortCard({
 }) {
   const { palette, s } = useRoundsTheme();
   const { subjects } = useContent();
-  const study = useStudy(),
-    [details, setDetails] = useState(false);
-  // A catalog refresh can remove metadata while this round still displays its
-  // prior card snapshot. The withdrawal effect will replace that round safely.
-  const subjectName = subjects.find((s) => s.id === card.subjectId)?.name ?? card.subjectId;
+  const study = useStudy();
+  const [details, setDetails] = useState(false);
+  const subjectName =
+    subjects.find((subject) => subject.id === card.subjectId)?.name ?? card.subjectId;
   const [cardHeight, setCardHeight] = useState(500);
   const small = cardHeight < 550;
-  const scrollBody = true;
-  const Body = scrollBody ? ScrollView : View;
-  const bodyStyle = {
-    paddingHorizontal: 22,
-    paddingBottom: 10,
-    gap: small ? 9 : 15,
-    flexGrow: 1,
-  };
   const reduced = useReducedMotion();
   const dark = recall && revealed;
   const ink = dark ? "#FFFAF0" : palette.ink;
+
   return (
     <View
-      onLayout={(e) => setCardHeight(e.nativeEvent.layout.height)}
+      onLayout={(event) => setCardHeight(event.nativeEvent.layout.height)}
       style={{
         flex: 1,
         borderRadius: 24,
@@ -98,28 +90,17 @@ export function ShortCard({
           </Copy>
         </Pressable>
       </View>
-      <Body
-        style={scrollBody ? { flex: 1 } : { flex: 1, ...bodyStyle }}
-        {...(scrollBody
-          ? { nestedScrollEnabled: true, contentContainerStyle: bodyStyle }
-          : {})}
+
+      <ScrollView
+        nestedScrollEnabled
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: 22,
+          paddingBottom: 10,
+          gap: small ? 9 : 15,
+          flexGrow: 1,
+        }}
       >
-        <Copy
-          style={{
-            color: dark ? "#BFD0C3" : palette.muted,
-            fontSize: 9,
-            lineHeight: 14,
-            letterSpacing: 1.4,
-            textTransform: "uppercase",
-          }}
-        >
-          {card.series} · {card.seconds} SEC
-        </Copy>
-        {card.editorialStatus === "unreviewed" && (
-          <Copy style={{ fontSize: 10, color: dark ? "#BFD0C3" : palette.muted }}>
-            Editorial preview · review pending
-          </Copy>
-        )}
         <Copy
           style={{
             fontFamily: serif,
@@ -131,6 +112,7 @@ export function ShortCard({
         >
           {recall && !revealed ? card.prompt : card.title}
         </Copy>
+
         {recall && !revealed ? (
           <View
             style={{
@@ -156,8 +138,8 @@ export function ShortCard({
               }}
             />
             <View style={{ gap: small ? 9 : 13 }}>
-              {card.facts.map((fact, i) => (
-                <View key={fact} style={{ flexDirection: "row", gap: 12 }}>
+              {card.facts.map((fact, index) => (
+                <View key={`${index}:${fact}`} style={{ flexDirection: "row", gap: 12 }}>
                   <Copy
                     style={{
                       color: dark ? "#A7C4AF" : palette.coral,
@@ -165,7 +147,7 @@ export function ShortCard({
                       marginTop: 1,
                     }}
                   >
-                    {String(i + 1).padStart(2, "0")}
+                    {String(index + 1).padStart(2, "0")}
                   </Copy>
                   <Copy
                     style={{
@@ -212,7 +194,8 @@ export function ShortCard({
             </View>
           </>
         )}
-      </Body>
+      </ScrollView>
+
       <View
         style={[
           s.between,
@@ -225,11 +208,11 @@ export function ShortCard({
         ]}
       >
         <Copy style={{ color: dark ? "#BFD0C3" : palette.muted, fontSize: 9 }}>
-          ROUNDS · CLINICAL DECISION
+          ROUNDS
         </Copy>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Read explanation and source"
+          accessibilityLabel="Open full card"
           onPress={() => {
             onOpen?.();
             setDetails(true);
@@ -244,6 +227,7 @@ export function ShortCard({
           <Copy style={{ color: ink, fontSize: 11 }}>Full card ↗</Copy>
         </Pressable>
       </View>
+
       <Modal
         visible={details}
         transparent
@@ -271,21 +255,20 @@ export function ShortCard({
               gap: 18,
             }}
           >
-            <Eyebrow>Understand the why</Eyebrow>
+            <Eyebrow>{subjectName}</Eyebrow>
             <ScrollView contentContainerStyle={{ gap: 18 }}>
               <Copy style={{ fontFamily: serif, fontSize: 27, lineHeight: 34 }}>
                 {card.title}
               </Copy>
-              {card.facts.map((fact) => (
-                <Copy key={fact}>{fact}</Copy>
+              {card.facts.map((fact, index) => (
+                <Copy key={`${index}:${fact}`}>{fact}</Copy>
               ))}
-              <Copy style={{ fontFamily: serif, fontSize: 21, lineHeight: 28 }}>
-                {card.pearl}
-              </Copy>
-              {card.explanation !== card.facts.join(" ") && (
-                <Copy>{card.explanation}</Copy>
-              )}
-              <CardReferences card={card} />
+              <View style={{ gap: 6 }}>
+                <Eyebrow>Clinical pearl</Eyebrow>
+                <Copy style={{ fontFamily: serif, fontSize: 21, lineHeight: 28 }}>
+                  {card.pearl}
+                </Copy>
+              </View>
               <Copy style={{ fontSize: 11, color: palette.muted }}>
                 Educational content for revision. Use local clinical protocols
                 and supervision for patient care.
