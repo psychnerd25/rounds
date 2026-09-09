@@ -54,9 +54,9 @@ export async function saveWorkspace(library:Library,workspace:Workspace):Promise
   });
 }
 
-// Simple portfolio/demo workflow: the editor changes only the five teaching
-// fields. Internal IDs/versioning stay hidden, and every save also refreshes the
-// public preview document consumed by development/preview builds.
+// Simple workflow: the editor changes only the five teaching fields. Internal
+// IDs/versioning remain hidden. Every save updates both preview and the public
+// App Store/Play Store catalog so content changes do not require a new binary.
 export async function saveWorkspaceToPreview(library:Library, workspace:Workspace):Promise<void> {
   assertCatalog(workspace.catalog);
   const preview: CatalogSnapshot = {
@@ -66,17 +66,34 @@ export async function saveWorkspaceToPreview(library:Library, workspace:Workspac
     revision: (library.preview?.revision ?? 0) + 1,
     catalog: workspace.catalog,
   };
-  // Reuse the normal parser so malformed content never gets pushed to the app.
+  const published: CatalogSnapshot = {
+    schemaVersion: 1,
+    kind: 'full',
+    channel: 'public',
+    revision: (library.published?.revision ?? 0) + 1,
+    catalog: workspace.catalog,
+  };
   parseCatalogUpdate(preview, {allowPreview:true});
+  parseCatalogUpdate(published);
   await runTransaction(db, async transaction => {
-    const [w,v] = await Promise.all([transaction.get(workspaceRef), transaction.get(previewRef)]);
-    if (w.data()?.revision !== library.revision || (v.data()?.revision ?? 0) !== (library.preview?.revision ?? 0)) conflict();
+    const [w,v,p] = await Promise.all([
+      transaction.get(workspaceRef),
+      transaction.get(previewRef),
+      transaction.get(publishedRef),
+    ]);
+    if (
+      w.data()?.revision !== library.revision ||
+      (v.data()?.revision ?? 0) !== (library.preview?.revision ?? 0) ||
+      (p.data()?.revision ?? 0) !== (library.published?.revision ?? 0)
+    ) conflict();
     transaction.set(workspaceRef, record(workspace, library.revision + 1));
     transaction.set(previewRef, record(preview, preview.revision));
+    transaction.set(publishedRef, record(published, published.revision));
   });
 }
 
-// Kept for a future public/reviewed release; the simple editor does not expose it.
+// Retained only for compatibility with older tooling; the simple editor uses
+// saveWorkspaceToPreview above and does not expose a separate publish step.
 export async function publishCards(library:Library,ids:string[]) {
   const next=publication(library,ids);
   await runTransaction(db,async transaction=>{
