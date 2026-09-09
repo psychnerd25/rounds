@@ -22,6 +22,6 @@
         ]
       }
     ],
-    "predeploy": ["npm run admin:build", "node --experimental-strip-types scripts/validate-hosting.mjs"]
+    "predeploy": ["npm run site:prepare", "npm run admin:build", "node --experimental-strip-types scripts/validate-hosting.mjs"]
   }
 }
