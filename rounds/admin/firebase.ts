@@ -34,18 +34,51 @@ function readSnapshot(data:any, allowPreview=false) {
   if(snapshot.kind!=='full' || snapshot.revision!==data.revision)throw Error('The published catalog is invalid. Contact support.');
   return snapshot;
 }
+function record(payload:unknown,revision:number) {
+  return {payload:encode(payload),revision,updatedAt:serverTimestamp(),updatedBy:auth.currentUser?.email};
+}
+function conflict() {throw Error('Another editor changed the library. Refresh and try again.');}
+
+async function bundledSeed():Promise<CatalogSnapshot> {
+  const response=await fetch('/preview-catalog.json',{cache:'no-store'});
+  if(!response.ok)throw Error('Could not load the bundled starter library.');
+  const snapshot=parseCatalogUpdate(await response.json(),{allowPreview:true});
+  if(snapshot.kind!=='full' || !snapshot.catalog.cards.length)throw Error('The bundled starter library is empty or invalid.');
+  return snapshot;
+}
+
+async function initializeLibrary(existingPublished:any,existingPreview:any):Promise<void> {
+  const published=readSnapshot(existingPublished);
+  const preview=readSnapshot(existingPreview,true);
+  const seed=published??preview??await bundledSeed();
+  const workspace:Workspace={catalog:seed.catalog,approvals:{}};
+  const initialPreview:CatalogSnapshot={schemaVersion:1,kind:'full',channel:'preview',revision:1,catalog:seed.catalog};
+  const initialPublished:CatalogSnapshot={schemaVersion:1,kind:'full',channel:'public',revision:1,catalog:seed.catalog};
+  parseCatalogUpdate(initialPreview,{allowPreview:true});
+  parseCatalogUpdate(initialPublished);
+  await runTransaction(db,async transaction=>{
+    const [w,p,v]=await Promise.all([
+      transaction.get(workspaceRef),transaction.get(publishedRef),transaction.get(previewRef),
+    ]);
+    if(w.exists())return;
+    transaction.set(workspaceRef,record(workspace,1));
+    if(!p.exists())transaction.set(publishedRef,record(initialPublished,1));
+    if(!v.exists())transaction.set(previewRef,record(initialPreview,1));
+  });
+}
+
 export async function loadLibrary():Promise<Library> {
-  const [w,p,v]=await Promise.all([getDocFromServer(workspaceRef),getDocFromServer(publishedRef),getDocFromServer(previewRef)]);
-  if(!w.exists())throw Error('The content library has not been initialized. Contact the project owner.');
+  let [w,p,v]=await Promise.all([getDocFromServer(workspaceRef),getDocFromServer(publishedRef),getDocFromServer(previewRef)]);
+  if(!w.exists()) {
+    await initializeLibrary(p.exists()?p.data():null,v.exists()?v.data():null);
+    [w,p,v]=await Promise.all([getDocFromServer(workspaceRef),getDocFromServer(publishedRef),getDocFromServer(previewRef)]);
+  }
+  if(!w.exists())throw Error('The content library could not be initialized. Refresh and try again.');
   const workspace=JSON.parse(w.data().payload) as Workspace;
   assertCatalog(workspace.catalog);
   if(!workspace.approvals || !Number.isSafeInteger(w.data().revision))throw Error('The private library is invalid. Restore a verified backup.');
   return {workspace,revision:w.data().revision,published:readSnapshot(p.data()),preview:readSnapshot(v.data(),true)};
 }
-function record(payload:unknown,revision:number) {
-  return {payload:encode(payload),revision,updatedAt:serverTimestamp(),updatedBy:auth.currentUser?.email};
-}
-function conflict() {throw Error('Another editor changed the library. Refresh and try again.');}
 export async function saveWorkspace(library:Library,workspace:Workspace):Promise<void> {
   await runTransaction(db,async transaction=>{
     const current=await transaction.get(workspaceRef);
@@ -105,7 +138,7 @@ export async function publishCards(library:Library,ids:string[]) {
   });
 }
 export async function listEditors() {
-  return (await getDocs(collection(db,'adminUsers'))).docs.map(d=>({email:d.id,enabled:d.data().enabled===true}));
+  return (await getDocs(collection(db,'adminUsers'))).docs.map(d=>({email:d.id,enabled:d.data()?.enabled===true}));
 }
 export async function setEditor(email:string,enabled:boolean) {
   email=email.trim().toLowerCase();
