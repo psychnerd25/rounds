@@ -4,7 +4,7 @@ import { getFirestore, doc, getDocFromServer, getDocs, collection, setDoc, runTr
 import config from './firebase-config.json';
 import { encode, publication, OWNER_EMAIL, type Workspace, type Library } from './model';
 import { assertCatalog } from '../src/domain/catalog-validation';
-import { parseCatalogUpdate } from '../src/domain/catalog-sync';
+import { parseCatalogUpdate, type CatalogSnapshot } from '../src/domain/catalog-sync';
 
 const app=initializeApp(config);
 export const auth=getAuth(app), db=getFirestore(app);
@@ -45,7 +45,7 @@ export async function loadLibrary():Promise<Library> {
 function record(payload:unknown,revision:number) {
   return {payload:encode(payload),revision,updatedAt:serverTimestamp(),updatedBy:auth.currentUser?.email};
 }
-function conflict() {throw Error('Another editor changed the library. Export your draft if needed, then refresh before saving again.');}
+function conflict() {throw Error('Another editor changed the library. Refresh and try again.');}
 export async function saveWorkspace(library:Library,workspace:Workspace):Promise<void> {
   await runTransaction(db,async transaction=>{
     const current=await transaction.get(workspaceRef);
@@ -53,6 +53,30 @@ export async function saveWorkspace(library:Library,workspace:Workspace):Promise
     transaction.set(workspaceRef,record(workspace,library.revision+1));
   });
 }
+
+// Simple portfolio/demo workflow: the editor changes only the five teaching
+// fields. Internal IDs/versioning stay hidden, and every save also refreshes the
+// public preview document consumed by development/preview builds.
+export async function saveWorkspaceToPreview(library:Library, workspace:Workspace):Promise<void> {
+  assertCatalog(workspace.catalog);
+  const preview: CatalogSnapshot = {
+    schemaVersion: 1,
+    kind: 'full',
+    channel: 'preview',
+    revision: (library.preview?.revision ?? 0) + 1,
+    catalog: workspace.catalog,
+  };
+  // Reuse the normal parser so malformed content never gets pushed to the app.
+  parseCatalogUpdate(preview, {allowPreview:true});
+  await runTransaction(db, async transaction => {
+    const [w,v] = await Promise.all([transaction.get(workspaceRef), transaction.get(previewRef)]);
+    if (w.data()?.revision !== library.revision || (v.data()?.revision ?? 0) !== (library.preview?.revision ?? 0)) conflict();
+    transaction.set(workspaceRef, record(workspace, library.revision + 1));
+    transaction.set(previewRef, record(preview, preview.revision));
+  });
+}
+
+// Kept for a future public/reviewed release; the simple editor does not expose it.
 export async function publishCards(library:Library,ids:string[]) {
   const next=publication(library,ids);
   await runTransaction(db,async transaction=>{
