@@ -1,0 +1,30 @@
+# Never commit local secrets or credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p8
+*.p12
+*.jks
+*.keystore
+*.mobileprovision
+service-account*.json
+serviceAccount*.json
+*service-account*.json
+credentials*.json
+
+# Local/generated files
+node_modules/
+.DS_Store
+.firebase/
+firebase-debug*.log
+.expo/
+dist/
+web-build/
+
+# The Expo app has its own more specific ignore rules
+rounds/node_modules/
+rounds/.expo/
+rounds/dist/
+rounds/web-build/
