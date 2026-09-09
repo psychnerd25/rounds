@@ -51,7 +51,8 @@ test("duplicate IDs, conflicting removals and broken relationships cannot poison
   assert.throws(() => mergeCatalogUpdate(full(1), delta(1, 2, [cards[0]], [cards[0].id])));
   const broken = delta(1, 2); broken.catalog.topics = [];
   assert.throws(() => mergeCatalogUpdate(full(1), broken), /card/);
-  assert.throws(() => mergeCatalogUpdate(full(1), full(2, [{ ...cards[0], editorialStatus: "unreviewed" }])));
+  const reviewed = { ...full(2, [{ ...cards[0], editorialStatus: "unreviewed" }]), channel: "reviewed" };
+  assert.throws(() => mergeCatalogUpdate(full(1), reviewed), /review/);
 });
 test("valid cache loads immediately without waiting for the network", async () => {
   let calls = 0;
@@ -120,7 +121,7 @@ test("a missing delta base retries once with a request for the full catalog", as
   assert.deepEqual(urls, ["https://example.org/catalog.json?since=1", "https://example.org/catalog.json"]);
 });
 test("bad or stale network data leaves last good cache unchanged", async () => {
-  for (const payload of [{}, full(1), full(3, [{ ...cards[0], references: [] }])]) {
+  for (const payload of [{}, full(1), full(3, [{ ...cards[0], facts: [] }])]) {
     const store = storage(JSON.stringify(full(2)));
     const repo = client(store, { fetcher: async () => response(payload) });
     await assert.rejects(repo.refresh());
