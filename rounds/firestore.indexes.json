@@ -1,0 +1,7 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    { "collectionGroup": "editorial", "fieldPath": "payload", "indexes": [] },
+    { "collectionGroup": "published", "fieldPath": "payload", "indexes": [] }
+  ]
+}

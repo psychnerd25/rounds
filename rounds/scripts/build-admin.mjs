@@ -1,0 +1,10 @@
+import { build } from 'esbuild';
+import { mkdirSync, copyFileSync, readFileSync, writeFileSync } from 'node:fs';
+const emulator=process.argv.includes('--emulator');
+const out=emulator?'/tmp/rounds-admin-emulator':'hosting/public/admin';
+mkdirSync(out,{recursive:true});
+await build({entryPoints:['admin/main.tsx'],bundle:true,minify:!emulator,sourcemap:false,outfile:`${out}/app.js`,target:'es2022',jsx:'automatic',define:{__ADMIN_EMULATOR__:String(emulator),'process.env.NODE_ENV':'"production"'}});
+copyFileSync('admin/index.html',`${out}/index.html`);
+copyFileSync('assets/brand/rounds-favicon.png',`${out}/brand.png`);
+if(emulator)writeFileSync(`${out}/index.html`,readFileSync(`${out}/index.html`,'utf8').replaceAll('/admin/','/'));
+console.log(`Dashboard built in ${out}${emulator?' (local emulators only)':''}.`);

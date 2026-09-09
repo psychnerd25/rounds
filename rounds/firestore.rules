@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedEditorIdentity() {
+      return request.auth != null && request.auth.token.email_verified == true
+        && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+    function owner() {
+      return signedEditorIdentity() && request.auth.token.email == 'dailydose.md.social@gmail.com';
+    }
+    function editor() {
+      return signedEditorIdentity() && (owner() ||
+        get(/databases/$(database)/documents/adminUsers/$(request.auth.token.email)).data.enabled == true);
+    }
+    function documentShape() {
+      return request.resource.data.keys().hasOnly(['payload','revision','updatedAt','updatedBy'])
+        && request.resource.data.payload is string && request.resource.data.payload.size() <= 750000
+        && request.resource.data.revision is int && request.resource.data.revision >= 1
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedBy == request.auth.token.email;
+    }
+    match /editorial/workspace {
+      allow get: if editor();
+      allow create: if editor() && documentShape() && request.resource.data.revision == 1;
+      allow update: if editor() && documentShape() && request.resource.data.revision == resource.data.revision + 1;
+    }
+    match /published/{channel} {
+      allow get: if channel in ['catalog', 'preview'];
+      allow create: if channel in ['catalog','preview'] && editor() && documentShape() && request.resource.data.revision == 1;
+      allow update: if channel in ['catalog','preview'] && editor() && documentShape()
+        && request.resource.data.revision == resource.data.revision + 1;
+    }
+    match /adminUsers/{email} {
+      allow get: if owner() || (signedEditorIdentity() && request.auth.token.email == email);
+      allow list: if owner();
+      allow create, update: if owner() && email != 'dailydose.md.social@gmail.com'
+        && email.size() <= 254 && email.matches('^[a-z0-9._%+-]+@[a-z0-9.-]+[.][a-z]{2,}$')
+        && request.resource.data.keys().hasOnly(['enabled','updatedAt','updatedBy'])
+        && request.resource.data.enabled is bool
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedBy == request.auth.token.email;
+      allow delete: if owner() && email != 'dailydose.md.social@gmail.com';
+    }
+    // No learner accounts, progress collection, or general public database access.
+    match /{document=**} { allow read, write: if false; }
+  }
+}

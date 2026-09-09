@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Rounds — medical review app mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#23262b;
+    --ink-soft:#3a3f46;
+    --paper:#f2ede0;
+    --paper-dim:#e7e0cd;
+    --line:#d3c7a6;
+    --teal:#2f6f63;
+    --teal-dark:#1f4a41;
+    --teal-tint:#d7e6e0;
+    --coral:#c1502e;
+    --coral-tint:#f2ddd2;
+    --amber:#d9a441;
+    --amber-tint:#f5e6c8;
+    --white:#fffaf0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    gap:18px;
+    background:
+      radial-gradient(circle at 20% 15%, #2c342f 0%, transparent 45%),
+      radial-gradient(circle at 85% 80%, #322620 0%, transparent 40%),
+      var(--ink);
+    font-family:'Inter',sans-serif;
+    padding:40px 16px;
+  }
+  .stage{display:flex;flex-direction:column;align-items:center;gap:16px;}
+  .caption{
+    color:#a9a397; font-size:13px; letter-spacing:.01em; max-width:340px;
+    text-align:center; line-height:1.5;
+  }
+  .caption b{color:var(--paper);font-weight:600;}
+
+  /* ---------- phone frame ---------- */
+  .phone{
+    width:390px; height:780px;
+    background:var(--ink);
+    border-radius:46px;
+    padding:14px;
+    box-shadow:0 40px 80px -20px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04) inset;
+    position:relative;
+  }
+  .phone-inner{
+    width:100%; height:100%;
+    background:var(--paper);
+    border-radius:34px;
+    overflow:hidden;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+  }
+  .notch{
+    position:absolute; top:14px; left:50%; transform:translateX(-50%);
+    width:120px; height:26px; background:var(--ink); border-radius:0 0 18px 18px;
+    z-index:50;
+  }
+  .statusbar{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:16px 24px 4px; font-size:13px; font-weight:600; color:var(--ink);
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .statusbar .dots{letter-spacing:2px;}
+
+  /* ---------- screens ---------- */
+  .screens{flex:1; position:relative; overflow:hidden;}
+  .screen{
+    position:absolute; inset:0;
+    display:none;
+    flex-direction:column;
+    padding:6px 20px 0;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .screen.active{display:flex;}
+
+  /* ---------- feed header ---------- */
+  .feed-header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:6px 2px 12px;
+  }
+  .brand{
+    font-family:'Fraunces',serif; font-weight:600; font-size:22px; color:var(--ink);
+  }
+  .brand span{color:var(--teal);}
+  .streak-chip{
+    display:flex; align-items:center; gap:5px;
+    background:var(--amber-tint); border:1px solid var(--amber);
+    color:var(--ink); font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13px;
+    padding:6px 11px; border-radius:20px; cursor:pointer;
+  }
+  .header-chips{display:flex; gap:8px;}
+  .score-chip{background:var(--teal-tint); border-color:var(--teal);}
+
+  .rotation-bar{
+    display:flex; gap:8px; overflow-x:auto; padding:2px 2px 12px;
+    scrollbar-width:none; -ms-overflow-style:none;
+  }
+  .rotation-bar::-webkit-scrollbar{display:none;}
+  .rot-chip{
+    flex:0 0 auto; padding:7px 14px; border-radius:20px; border:1px solid var(--line);
+    background:var(--white); font-family:'Inter',sans-serif; font-weight:600; font-size:12.5px;
+    color:#7c7669; cursor:pointer; white-space:nowrap;
+  }
+  .rot-chip.active{background:var(--teal); border-color:var(--teal); color:var(--white);}
+
+  .story-bar{display:flex; gap:4px; margin-bottom:14px;}
+  .seg{flex:1; height:3px; border-radius:2px; background:var(--line);}
+  .seg.done{background:var(--teal);}
+  .seg.current{background:linear-gradient(90deg,var(--teal) 50%, var(--line) 50%);}
+
+  /* ---------- card stack ---------- */
+  .card-stack{
+    position:relative; flex:1; margin-bottom:10px; perspective:1400px;
+  }
+  .fact-card{
+    position:absolute; inset:0;
+    border-radius:22px;
+    touch-action:none;
+    will-change:transform;
+    transition:transform .28s cubic-bezier(.2,.8,.2,1), opacity .28s;
+  }
+  .fact-card.dragging{transition:none;}
+  .card-inner{
+    position:relative; width:100%; height:100%;
+    transform-style:preserve-3d;
+    transition:transform .5s cubic-bezier(.3,.7,.3,1);
+  }
+  .fact-card.flipped .card-inner{transform:rotateY(180deg);}
+  .card-face{
+    position:absolute; inset:0; backface-visibility:hidden;
+    border-radius:22px; border:1px solid var(--line);
+    background:var(--white);
+    padding:22px;
+    display:flex; flex-direction:column;
+    box-shadow:0 18px 30px -18px rgba(35,38,43,.35);
+  }
+  .card-face.back{transform:rotateY(180deg); background:var(--teal-dark); border-color:var(--teal-dark);}
+  .tag{
+    align-self:flex-start;
+    font-size:12.5px; font-weight:600; padding:5px 12px; border-radius:20px;
+    font-family:'Inter',sans-serif;
+  }
+  .card-face.front .tag{background:var(--teal-tint); color:var(--teal-dark);}
+  .card-face.back .tag{background:rgba(255,255,255,.14); color:var(--white);}
+  .pearl{
+    font-family:'Fraunces',serif; font-weight:600; font-size:26px; line-height:1.28;
+    color:var(--ink); margin-top:22px;
+  }
+  .explain{
+    font-family:'Inter',sans-serif; font-size:16px; line-height:1.55;
+    color:var(--white); margin-top:20px; opacity:.92;
+  }
+  .tap-hint{
+    margin-top:auto; font-size:13px; color:#8b8578; align-self:center;
+    padding-bottom:4px;
+  }
+  .card-face.back .tap-hint{color:rgba(255,255,255,.6);}
+
+  .feed-actions{display:flex; gap:12px; padding:2px 0 8px;}
+  .act-btn{
+    flex:1; padding:14px 0; border-radius:16px; border:none; cursor:pointer;
+    font-family:'Inter',sans-serif; font-weight:600; font-size:14.5px;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .act-btn.skip{background:var(--coral-tint); color:var(--coral);}
+  .act-btn.got{background:var(--teal); color:var(--white);}
+  .hint{text-align:center; font-size:12px; color:#948e80; margin:0 0 12px;}
+
+  /* empty state */
+  .empty-state{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; text-align:center; gap:10px; padding:0 24px;
+    background:var(--white); border-radius:22px; border:1px solid var(--line);
+  }
+  .empty-state .big{font-size:38px;}
+  .empty-state h3{font-family:'Fraunces',serif; margin:0; font-size:21px; color:var(--ink);}
+  .empty-state p{margin:0; font-size:14px; color:#7c7669; line-height:1.5;}
+
+  /* ---------- review screen ---------- */
+  .review-header{padding:6px 2px 4px;}
+  .review-header h2{font-family:'Fraunces',serif; font-size:22px; margin:0 0 2px; color:var(--ink);}
+  .review-header p{margin:0; font-size:13.5px; color:#7c7669;}
+  .review-progress{
+    height:5px; background:var(--paper-dim); border-radius:4px; margin:14px 0 18px; overflow:hidden;
+  }
+  .review-progress i{display:block; height:100%; background:var(--teal); border-radius:4px; transition:width .3s;}
+  .review-card-wrap{flex:1; perspective:1400px; margin-bottom:14px; position:relative;}
+  .grade-row{display:flex; gap:8px; padding-bottom:10px;}
+  .grade-btn{
+    flex:1; padding:13px 0; border-radius:14px; border:none; cursor:pointer;
+    font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px; color:var(--white);
+  }
+  .grade-btn.again{background:var(--coral);}
+  .grade-btn.good{background:var(--amber); color:var(--ink);}
+  .grade-btn.easy{background:var(--teal);}
+
+  /* ---------- progress screen ---------- */
+  .progress-screen{padding-top:10px;}
+  .streak-hero{
+    display:flex; align-items:center; gap:16px; padding:10px 2px 20px; border-bottom:1px solid var(--line);
+  }
+  .flame-badge{
+    width:64px; height:64px; border-radius:20px; background:var(--amber-tint);
+    display:flex; align-items:center; justify-content:center; font-size:30px; flex-shrink:0;
+  }
+  .streak-num{font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:30px; color:var(--ink); line-height:1;}
+  .streak-label{font-size:13px; color:#7c7669; margin-top:4px;}
+
+  /* pet / feed-the-cat */
+  .pet-card{
+    display:flex; gap:14px; align-items:center; padding:16px 2px; border-bottom:1px solid var(--line);
+  }
+  .pet-visual{
+    width:64px; height:64px; border-radius:20px; background:var(--teal-tint);
+    display:flex; align-items:center; justify-content:center; font-size:32px; flex-shrink:0;
+    transition:transform .25s ease;
+  }
+  .pet-info{flex:1; min-width:0;}
+  .pet-name-row{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:7px;}
+  .pet-name{font-family:'Fraunces',serif; font-weight:600; font-size:16px; color:var(--ink);}
+  .pet-mood{font-size:12px; color:#8b8578;}
+  .bowl-bar{height:8px; background:var(--paper-dim); border-radius:6px; overflow:hidden;}
+  .bowl-bar i{display:block; height:100%; background:var(--teal); border-radius:6px; transition:width .4s ease;}
+  .pet-caption{font-size:12px; color:#8b8578; margin-top:7px;}
+  .pet-card{cursor:pointer;}
+
+  /* ---------- Miso's room ---------- */
+  .pet-scene{
+    position:relative; width:100%; aspect-ratio:4/3; border-radius:20px; overflow:hidden;
+    background:linear-gradient(to bottom, #e9e2d2 0%, #e9e2d2 64%, #cbb383 64%, #cbb383 100%);
+    border:1px solid var(--line); margin-top:10px;
+  }
+  .scene-window{
+    position:absolute; top:14px; right:16px; width:64px; height:48px; border-radius:8px;
+    background:linear-gradient(to bottom, #cfe0da, #b7d2c8);
+    border:4px solid var(--white); display:flex; align-items:flex-end; justify-content:center;
+    font-size:20px; padding-bottom:2px;
+  }
+  .scene-frame{
+    position:absolute; top:20px; left:20px; width:36px; height:28px; border-radius:4px;
+    background:var(--white); border:3px solid var(--teal-tint);
+  }
+  .room-item{position:absolute; bottom:14%;}
+  .room-item.cushion{
+    left:12%; width:56px; height:22px; border-radius:50%; background:var(--coral-tint);
+    border:1px solid var(--coral); bottom:12%;
+  }
+  .room-item.yarn{left:20%; bottom:15%; font-size:22px;}
+  .room-item.locked{
+    right:10%; bottom:13%; width:52px; height:36px; border-radius:10px;
+    border:2px dashed #a89f8c; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:2px; background:rgba(255,255,255,.5);
+  }
+  .room-item.locked .lock-ico{font-size:14px;}
+  .room-item.locked .lock-label{font-size:9px; font-weight:600; color:#8b8578; font-family:'Inter',sans-serif;}
+
+  .cat-figure{
+    position:absolute; left:50%; bottom:18%; width:110px; height:95px; margin-left:-55px;
+    cursor:pointer; animation:catFloat 3.2s ease-in-out infinite;
+  }
+  .cat-figure.petted{animation:catBounce .5s ease;}
+  @keyframes catFloat{
+    0%,100%{transform:translateY(0);} 50%{transform:translateY(-4px);}
+  }
+  @keyframes catBounce{
+    0%{transform:scale(1);} 30%{transform:scale(1.08,0.92);} 60%{transform:scale(0.96,1.05);} 100%{transform:scale(1);}
+  }
+  .cat-body{
+    position:absolute; bottom:0; left:12px; width:86px; height:58px;
+    background:#c98f5c; border-radius:50% 50% 46% 46% / 60% 60% 40% 40%;
+  }
+  .cat-belly{
+    position:absolute; bottom:0; left:24px; width:38px; height:34px;
+    background:#f3e3c9; border-radius:50%;
+  }
+  .cat-tail{
+    position:absolute; bottom:6px; right:0; width:14px; height:44px; background:#c98f5c;
+    border-radius:10px; transform-origin:bottom center; animation:tailSwish 2.4s ease-in-out infinite;
+  }
+  @keyframes tailSwish{
+    0%,100%{transform:rotate(8deg);} 50%{transform:rotate(-10deg);}
+  }
+  .cat-head{
+    position:absolute; top:0; left:22px; width:58px; height:50px; background:#c98f5c; border-radius:50%;
+  }
+  .cat-ear{
+    position:absolute; top:-12px; width:0; height:0;
+    border-left:11px solid transparent; border-right:11px solid transparent; border-bottom:18px solid #c98f5c;
+  }
+  .cat-ear.left{left:2px; transform:rotate(-14deg);}
+  .cat-ear.right{right:2px; transform:rotate(14deg);}
+  .cat-eye{
+    position:absolute; top:20px; width:7px; height:9px; background:var(--ink); border-radius:50%;
+    animation:blink 4.5s infinite;
+  }
+  .cat-eye.left{left:14px;} .cat-eye.right{right:14px;}
+  @keyframes blink{
+    0%,92%,100%{transform:scaleY(1);} 96%{transform:scaleY(0.1);}
+  }
+  .cat-nose{
+    position:absolute; top:30px; left:50%; margin-left:-3px; width:6px; height:5px;
+    background:#a86f42; border-radius:50%;
+  }
+
+  .hearts{position:absolute; inset:0; pointer-events:none;}
+  .heart-pop{
+    position:absolute; font-size:16px; opacity:1; animation:heartRise 1s ease-out forwards;
+  }
+  @keyframes heartRise{
+    0%{opacity:1; transform:translateY(0) scale(0.8);}
+    100%{opacity:0; transform:translateY(-46px) scale(1.15);}
+  }
+
+  .food-bowl{
+    position:absolute; left:50%; bottom:6%; width:46px; height:16px; margin-left:-23px;
+  }
+  .bowl-food{
+    position:absolute; bottom:4px; left:4px; right:4px; height:0%; max-height:9px;
+    background:var(--amber); border-radius:6px 6px 2px 2px; transition:height .4s ease;
+  }
+  .bowl-rim{
+    position:absolute; inset:0; border-radius:50%; border:4px solid var(--ink-soft);
+    background:transparent;
+  }
+
+  .pet-status-row{display:flex; gap:10px; padding:6px 2px 16px;}
+  .pet-status{
+    flex:1; background:var(--white); border:1px solid var(--line); border-radius:14px;
+    padding:10px; text-align:center;
+  }
+  .pet-status .val{display:block; font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:15px; color:var(--ink);}
+  .pet-status .lbl{display:block; font-size:11px; color:#8b8578; margin-top:2px;}
+
+  /* leaderboard */
+  .leaderboard{display:flex; flex-direction:column; gap:6px; padding:0 2px 4px;}
+  .lb-row{
+    display:flex; align-items:center; gap:10px; padding:9px 11px;
+    border-radius:12px; background:var(--white); border:1px solid var(--line);
+  }
+  .lb-row.me{background:var(--teal-tint); border-color:var(--teal);}
+  .lb-rank{width:16px; font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:12.5px; color:#8b8578; text-align:center;}
+  .lb-avatar{
+    width:27px; height:27px; border-radius:50%; background:var(--amber-tint);
+    display:flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:700;
+    color:var(--ink); flex-shrink:0;
+  }
+  .lb-row.me .lb-avatar{background:var(--teal); color:var(--white);}
+  .lb-name{flex:1; font-size:13.5px; font-weight:600; color:var(--ink);}
+  .lb-pts{font-family:'IBM Plex Mono',monospace; font-size:13px; color:#7c7669;}
+  .week-strip{display:flex; gap:8px; padding:16px 2px;}
+  .day-dot{
+    flex:1; aspect-ratio:1; border-radius:10px; background:var(--paper-dim);
+    display:flex; align-items:center; justify-content:center; font-size:11px; color:#9a9384;
+    font-family:'Inter',sans-serif; font-weight:600; border:1px solid var(--line);
+  }
+  .day-dot.done{background:var(--teal); color:var(--white); border-color:var(--teal);}
+  .day-dot.today{border:2px solid var(--amber); color:var(--ink);}
+  .stat-grid{display:flex; gap:10px; padding:14px 2px 6px;}
+  .stat-card{
+    flex:1; background:var(--white); border:1px solid var(--line); border-radius:16px; padding:12px;
+  }
+  .stat-card .val{font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:20px; color:var(--ink);}
+  .stat-card .lbl{font-size:11.5px; color:#8b8578; margin-top:2px;}
+  .heatmap-title{font-size:13px; font-weight:600; color:var(--ink); margin:16px 2px 8px;}
+  .heatmap{display:grid; grid-template-columns:repeat(14,1fr); gap:4px; padding:0 2px 14px;}
+  .hcell{aspect-ratio:1; border-radius:3px;}
+  .hcell.l0{background:var(--paper-dim);}
+  .hcell.l1{background:#b9d4cb;}
+  .hcell.l2{background:#6fa494;}
+  .hcell.l3{background:var(--teal-dark);}
+  .motivate{
+    margin:auto 2px 16px; font-family:'Fraunces',serif; font-size:15px; color:var(--ink-soft);
+    text-align:center; line-height:1.5; padding:14px; background:var(--paper-dim); border-radius:14px;
+  }
+
+  /* ---------- tab bar ---------- */
+  .tabbar{
+    display:flex; border-top:1px solid var(--line); background:var(--white);
+  }
+  .tab{
+    flex:1; border:none; background:none; padding:12px 0 10px; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    font-family:'Inter',sans-serif; font-size:11px; color:#a39c8d; font-weight:600;
+    position:relative;
+  }
+  .tab .ico{font-size:19px; line-height:1;}
+  .tab.active{color:var(--teal-dark);}
+  .tab .badge{
+    position:absolute; top:4px; right:calc(50% - 22px);
+    background:var(--coral); color:var(--white); font-size:10px; font-weight:700;
+    min-width:16px; height:16px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono',monospace;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="phone-inner">
+      <div class="statusbar"><span>9:41</span><span class="dots">•••</span></div>
+
+      <div class="screens">
+        <!-- FEED -->
+        <section class="screen feed-screen active" data-screen="feed">
+          <div class="feed-header">
+            <div class="brand">round<span>s</span></div>
+            <div class="header-chips">
+              <button class="streak-chip" id="goStreak">🔥 <span id="streakChipNum">12</span></button>
+              <button class="streak-chip score-chip" id="goScore">🐾 <span id="scoreChipNum">260</span></button>
+            </div>
+          </div>
+          <div class="rotation-bar" id="rotationBar"></div>
+          <div class="story-bar" id="storyBar"></div>
+          <div class="card-stack" id="cardStack"></div>
+          <div class="feed-actions">
+            <button class="act-btn skip" id="btnSkip">✕ New to me</button>
+            <button class="act-btn got" id="btnGot">✓ Got it</button>
+          </div>
+          <p class="hint">Tap the card to see the call · drag to swipe</p>
+        </section>
+
+        <!-- REVIEW / FLASHCARDS -->
+        <section class="screen review-screen" data-screen="review">
+          <div class="review-header">
+            <h2>Review deck</h2>
+            <p id="reviewSub">Cards you flagged as new or forgotten</p>
+          </div>
+          <div class="review-progress"><i id="reviewBar" style="width:0%"></i></div>
+          <div class="review-card-wrap" id="reviewCardWrap"></div>
+          <div class="grade-row" id="gradeRow">
+            <button class="grade-btn again" data-grade="again">Again</button>
+            <button class="grade-btn good" data-grade="good">Good</button>
+            <button class="grade-btn easy" data-grade="easy">Easy</button>
+          </div>
+        </section>
+
+        <!-- MISO / PET ROOM -->
+        <section class="screen pet-screen" data-screen="pet">
+          <div class="review-header">
+            <h2>Miso's room</h2>
+            <p id="petSub">Fed by every card you clear</p>
+          </div>
+
+          <div class="pet-scene" id="petScene">
+            <div class="scene-window"><span>🪴</span></div>
+            <div class="scene-frame"></div>
+
+            <div class="room-item cushion"></div>
+            <div class="room-item yarn" id="itemYarn">🧶</div>
+            <div class="room-item locked" id="itemLocked">
+              <span class="lock-ico">🔒</span><span class="lock-label">Day 14</span>
+            </div>
+
+            <div class="cat-figure" id="catFigure">
+              <div class="cat-tail"></div>
+              <div class="cat-body"><div class="cat-belly"></div></div>
+              <div class="cat-head">
+                <div class="cat-ear left"></div>
+                <div class="cat-ear right"></div>
+                <div class="cat-eye left" id="eyeLeft"></div>
+                <div class="cat-eye right" id="eyeRight"></div>
+                <div class="cat-nose"></div>
+              </div>
+            </div>
+
+            <div class="hearts" id="heartsLayer"></div>
+
+            <div class="food-bowl">
+              <div class="bowl-food" id="bowlFoodFillRoom"></div>
+              <div class="bowl-rim"></div>
+            </div>
+          </div>
+
+          <p class="hint">Tap Miso to say hi</p>
+
+          <div class="pet-status-row">
+            <div class="pet-status"><span class="val" id="petMoodRoom">content</span><span class="lbl">mood</span></div>
+            <div class="pet-status"><span class="val" id="petsToday">0</span><span class="lbl">pets today</span></div>
+            <div class="pet-status"><span class="val" id="petStreak">12</span><span class="lbl">day streak</span></div>
+          </div>
+        </section>
+
+        <!-- PROGRESS -->
+        <section class="screen progress-screen" data-screen="progress">
+          <div class="streak-hero">
+            <div class="flame-badge">🔥</div>
+            <div>
+              <div class="streak-num"><span id="streakBig">12</span> days</div>
+              <div class="streak-label">Current streak · best 19</div>
+            </div>
+          </div>
+          <div class="week-strip" id="weekStrip"></div>
+
+          <div class="pet-card" id="petCardWidget">
+            <div class="pet-visual" id="petEmoji">🐱</div>
+            <div class="pet-info">
+              <div class="pet-name-row"><span class="pet-name">Miso</span><span class="pet-mood" id="petMood">content</span></div>
+              <div class="bowl-bar"><i id="bowlFill" style="width:0%"></i></div>
+              <p class="pet-caption" id="petCaption">Clear a few cards to feed Miso</p>
+            </div>
+          </div>
+
+          <div class="stat-grid">
+            <div class="stat-card"><div class="val" id="statReviewed">0</div><div class="lbl">reviewed today</div></div>
+            <div class="stat-card"><div class="val" id="statAccuracy">—</div><div class="lbl">this session</div></div>
+            <div class="stat-card"><div class="val" id="statDeck">0</div><div class="lbl">saved for later</div></div>
+          </div>
+
+          <div class="heatmap-title">This week's leaderboard</div>
+          <div class="leaderboard" id="leaderboard"></div>
+
+          <div class="heatmap-title">Last 8 weeks</div>
+          <div class="heatmap" id="heatmap"></div>
+          <p class="motivate">You won't be handed a differential on the floor. You'll be handed a decision. Small pockets, real reps.</p>
+        </section>
+      </div>
+
+      <nav class="tabbar">
+        <button class="tab active" data-target="feed"><span class="ico">⚡</span>Feed</button>
+        <button class="tab" data-target="review"><span class="ico">🗂</span>Review<span class="badge" id="badgeCount" style="display:none">0</span></button>
+        <button class="tab" data-target="pet"><span class="ico">🐈</span>Miso</button>
+        <button class="tab" data-target="progress"><span class="ico">📈</span>Progress</button>
+      </nav>
+    </div>
+  </div>
+  <p class="caption"><b>Rounds</b> — an inshots-style feed of on-the-floor decision points, built from dailydose.md, for spare pockets of time. Swipe through what you'd actually do, flag what you didn't know, and clear it Anki-style while your streak keeps you coming back.</p>
+</div>
+
+<script>
+  const facts = [
+    {id:1, rotation:'Cardio ICU', tag:'Cardiology · nights', pearl:"K+ comes back at 6.8 with peaked T waves. Your first move?", explain:"Calcium gluconate, right away — it stabilizes the myocardium in minutes. Insulin/dextrose and a beta-agonist shift potassium into cells but take longer. Kayexalate or dialysis deal with total-body potassium after the heart is protected."},
+    {id:2, rotation:'Neuro floors', tag:'Neurology · floor call', pearl:'One pupil blown after a fall. Do you wait for the CT?', explain:"No — call it a surgical emergency and get neurosurgery on the phone while imaging is arranged. A unilateral fixed, dilated pupil is uncal herniation until proven otherwise; every minute is brainstem compression."},
+    {id:3, rotation:'IM floors', tag:'Renal · overnight', pearl:'Anion gap is 24 and the resident asks you what you\u2019re worried about.', explain:"Say it out loud, don't just think it: DKA, uremia, lactic acidosis, toxic alcohols, salicylates. What you order next — gas, lactate, ketones, osmolar gap — depends on which of these you're ruling out first, not on listing MUDPILES."},
+    {id:4, rotation:'Cardio ICU', tag:'Pulmonology · rapid response', pearl:'Asthmatic, tiring out, sats holding at 91%. When do you call anesthesia?', explain:"Before the sats drop, not after. A rising CO2 and a quiet chest are the warning signs — sats look reassuring right up until they don't. Escalate on clinical fatigue, not on the pulse ox."},
+    {id:5, rotation:'IM floors', tag:'Hematology · consult', pearl:'Smear shows schistocytes and platelets are 40. What do you hold off on?', explain:"Hold platelet transfusion unless there's active bleeding — in TTP it can fuel more clotting. Get ADAMTS13 sent and call hematology for plasma exchange; this is a call-now, not a wait-for-labs, situation."},
+    {id:6, rotation:'IM floors', tag:'Endocrine · ward', pearl:'DKA patient\u2019s glucose normalizes but the gap is still open. Do you stop the insulin drip?', explain:"No — the gap closing is the endpoint, not the glucose. Add dextrose to the fluids and keep the insulin running, or you'll watch the ketoacidosis rebound."},
+    {id:7, rotation:'ID elective', tag:'Infectious Disease · ID page', pearl:'Fever, relative bradycardia, and a travel history. What do you ask next?', explain:"Ask about food and water source before you ask about mosquitoes — this pattern points toward typhoid, not malaria, and changes which cultures and antibiotics you're reaching for."},
+    {id:8, rotation:'IM floors', tag:'Surgery · consult', pearl:'Painless jaundice with a palpable gallbladder. Do you treat it like a gallstone case?', explain:"No — painless is the tell. Courvoisier's sign points toward malignant obstruction, most often pancreatic head cancer, and changes the workup to imaging and oncology rather than surgery for stones."},
+  ];
+  const rotations = ['All', 'Cardio ICU', 'Neuro floors', 'IM floors', 'ID elective'];
+  let activeRotation = 'All';
+  let clearedIds = new Set();
+  let queue = [];
+
+  let deck = [
+    {tag:'Renal · overnight', pearl:'Anion gap is 24 and the resident asks you what you\u2019re worried about.', explain:"Say it out loud, don't just think it: DKA, uremia, lactic acidosis, toxic alcohols, salicylates. What you order next — gas, lactate, ketones, osmolar gap — depends on which of these you're ruling out first, not on listing MUDPILES."},
+    {tag:'Infectious Disease · ID page', pearl:'Fever, relative bradycardia, and a travel history. What do you ask next?', explain:"Ask about food and water source before you ask about mosquitoes — this pattern points toward typhoid, not malaria, and changes which cultures and antibiotics you're reaching for."},
+  ];
+  let gotCount = 0, skipCount = 0;
+  let score = 260;
+  const dailyGoal = 80;
+  let todayPoints = 0;
+  let streakDays = 12;
+  let petsToday = 0;
+  const peers = [
+    {name:'Aisha R.', pts:540},
+    {name:'Marcus O.', pts:480},
+    {name:'Priya N.', pts:410},
+    {name:'Devon K.', pts:300},
+  ];
+
+  const cardStack = document.getElementById('cardStack');
+  const storyBar = document.getElementById('storyBar');
+  const rotationBar = document.getElementById('rotationBar');
+
+  function renderRotationBar(){
+    rotationBar.innerHTML = '';
+    rotations.forEach(r => {
+      const chip = document.createElement('button');
+      chip.className = 'rot-chip' + (r === activeRotation ? ' active' : '');
+      chip.textContent = r;
+      chip.addEventListener('click', () => {
+        activeRotation = r;
+        computeQueue();
+        renderRotationBar();
+        renderCardStack();
+      });
+      rotationBar.appendChild(chip);
+    });
+  }
+
+  function computeQueue(){
+    queue = facts.filter(f => !clearedIds.has(f.id) && (activeRotation === 'All' || f.rotation === activeRotation));
+  }
+
+  function renderStoryBar(){
+    storyBar.innerHTML = '';
+    const inRotation = facts.filter(f => activeRotation === 'All' || f.rotation === activeRotation);
+    const doneCount = inRotation.length - queue.length;
+    inRotation.forEach((_, i) => {
+      const s = document.createElement('div');
+      s.className = 'seg' + (i < doneCount ? ' done' : (i === doneCount ? ' current' : ''));
+      storyBar.appendChild(s);
+    });
+  }
+
+  function buildCardEl(fact, depth){
+    const card = document.createElement('div');
+    card.className = 'fact-card';
+    const scale = 1 - depth * 0.045;
+    const y = depth * 12;
+    card.style.transform = `translateY(${y}px) scale(${scale})`;
+    card.style.zIndex = 10 - depth;
+    card.style.opacity = depth > 2 ? 0 : 1;
+    card.innerHTML = `
+      <div class="card-inner">
+        <div class="card-face front">
+          <span class="tag">${fact.tag}</span>
+          <p class="pearl">${fact.pearl}</p>
+          <span class="tap-hint">Tap to see what you'd do</span>
+        </div>
+        <div class="card-face back">
+          <span class="tag">${fact.tag}</span>
+          <p class="explain">${fact.explain}</p>
+          <span class="tap-hint">Tap to flip back</span>
+        </div>
+      </div>`;
+    return card;
+  }
+
+  function renderCardStack(){
+    cardStack.innerHTML = '';
+    renderStoryBar();
+    if (queue.length === 0){
+      const label = activeRotation === 'All' ? 'all rotations' : activeRotation;
+      cardStack.innerHTML = `<div class="empty-state">
+        <div class="big">🎉</div>
+        <h3>You're all caught up</h3>
+        <p>Nothing new left for ${label} right now. Anything you flagged is waiting in Review.</p>
+      </div>`;
+      return;
+    }
+    const visible = queue.slice(0, 3);
+    visible.slice().reverse().forEach((fact, ri) => {
+      const depth = visible.length - 1 - ri;
+      const el = buildCardEl(fact, depth);
+      cardStack.appendChild(el);
+    });
+    attachTopCardHandlers();
+  }
+
+  function attachTopCardHandlers(){
+    const top = cardStack.querySelector('.fact-card');
+    if (!top) return;
+    let startX = 0, startY = 0, dx = 0, dragging = false, moved = false;
+
+    top.addEventListener('pointerdown', e => {
+      dragging = true; moved = false;
+      startX = e.clientX; startY = e.clientY;
+      top.classList.add('dragging');
+      top.setPointerCapture(e.pointerId);
+    });
+    top.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      dx = e.clientX - startX;
+      if (Math.abs(dx) > 6) moved = true;
+      const rot = dx / 18;
+      top.style.transform = `translateX(${dx}px) rotate(${rot}deg)`;
+    });
+    top.addEventListener('pointerup', () => {
+      dragging = false;
+      top.classList.remove('dragging');
+      if (Math.abs(dx) > 90){
+        dx > 0 ? doGot() : doSkip();
+      } else if (!moved){
+        top.classList.toggle('flipped');
+        top.style.transform = 'translateY(0) scale(1)';
+      } else {
+        top.style.transform = 'translateY(0) scale(1)';
+      }
+      dx = 0;
+    });
+  }
+
+  function flyOut(direction){
+    const top = cardStack.querySelector('.fact-card');
+    if (!top) return;
+    top.style.transition = 'transform .32s ease, opacity .32s ease';
+    top.style.transform = `translateX(${direction * 480}px) rotate(${direction * 22}deg)`;
+    top.style.opacity = '0';
+  }
+
+  function doGot(){
+    if (queue.length === 0) return;
+    flyOut(1);
+    const fact = queue[0];
+    clearedIds.add(fact.id);
+    gotCount++;
+    queue.shift();
+    addScore(10);
+    updateStats();
+    setTimeout(renderCardStack, 260);
+  }
+
+  function doSkip(){
+    if (queue.length === 0) return;
+    flyOut(-1);
+    const fact = queue[0];
+    clearedIds.add(fact.id);
+    deck.push(fact);
+    skipCount++;
+    queue.shift();
+    addScore(6);
+    updateStats();
+    updateBadge();
+    setTimeout(renderCardStack, 260);
+  }
+
+  document.getElementById('btnGot').addEventListener('click', doGot);
+  document.getElementById('btnSkip').addEventListener('click', doSkip);
+
+  // ---------- review screen ----------
+  const reviewCardWrap = document.getElementById('reviewCardWrap');
+  const reviewBar = document.getElementById('reviewBar');
+  const reviewSub = document.getElementById('reviewSub');
+  let reviewTotal = deck.length;
+
+  function renderReview(){
+    reviewCardWrap.innerHTML = '';
+    reviewTotal = Math.max(reviewTotal, deck.length);
+    const doneCount = reviewTotal - deck.length;
+    reviewBar.style.width = reviewTotal ? `${(doneCount/reviewTotal)*100}%` : '0%';
+    document.getElementById('gradeRow').style.display = deck.length ? 'flex' : 'none';
+
+    if (deck.length === 0){
+      reviewSub.textContent = 'Nothing due right now';
+      reviewCardWrap.innerHTML = `<div class="empty-state">
+        <div class="big">✅</div>
+        <h3>Deck cleared</h3>
+        <p>Everything you flagged has been reviewed. It'll resurface later if you need it again.</p>
+      </div>`;
+      return;
+    }
+    reviewSub.textContent = `${deck.length} card${deck.length>1?'s':''} to review`;
+    const fact = deck[0];
+    const card = document.createElement('div');
+    card.className = 'fact-card';
+    card.style.position = 'relative';
+    card.innerHTML = `
+      <div class="card-inner">
+        <div class="card-face front">
+          <span class="tag">${fact.tag}</span>
+          <p class="pearl">${fact.pearl}</p>
+          <span class="tap-hint">Tap to reveal the call</span>
+        </div>
+        <div class="card-face back">
+          <span class="tag">${fact.tag}</span>
+          <p class="explain">${fact.explain}</p>
+          <span class="tap-hint">How well did you know this?</span>
+        </div>
+      </div>`;
+    card.addEventListener('click', () => card.classList.toggle('flipped'));
+    reviewCardWrap.appendChild(card);
+  }
+
+  document.getElementById('gradeRow').addEventListener('click', e => {
+    const btn = e.target.closest('.grade-btn');
+    if (!btn || deck.length === 0) return;
+    const grade = btn.dataset.grade;
+    const card = deck.shift();
+    if (grade === 'again') { deck.push(card); addScore(3); } // resurfaces later in the session
+    else if (grade === 'good') addScore(15);
+    else addScore(20);
+    updateBadge();
+    renderReview();
+  });
+
+  // ---------- badges / stats ----------
+  function updateBadge(){
+    const badge = document.getElementById('badgeCount');
+    if (deck.length > 0){
+      badge.style.display = 'flex';
+      badge.textContent = deck.length;
+    } else {
+      badge.style.display = 'none';
+    }
+    document.getElementById('statDeck').textContent = deck.length;
+  }
+
+  function updateStats(){
+    document.getElementById('statReviewed').textContent = gotCount + skipCount;
+    const total = gotCount + skipCount;
+    document.getElementById('statAccuracy').textContent = total ? Math.round((gotCount/total)*100) + '%' : '—';
+  }
+
+  // ---------- scoring, pet, leaderboard ----------
+  function addScore(pts){
+    score += pts;
+    todayPoints += pts;
+    document.getElementById('scoreChipNum').textContent = score;
+    updateCat();
+    renderLeaderboard();
+  }
+
+  function updateCat(){
+    const pct = Math.min(100, Math.round((todayPoints / dailyGoal) * 100));
+    const emoji = document.getElementById('petEmoji');
+    const mood = document.getElementById('petMood');
+    const caption = document.getElementById('petCaption');
+    document.getElementById('bowlFill').style.width = pct + '%';
+    const roomFill = document.getElementById('bowlFoodFillRoom');
+    if (roomFill) roomFill.style.height = Math.max(6, pct * 0.09) + 'px';
+
+    let moodWord, moodEmoji;
+    if (pct >= 100){ moodWord = 'full & happy'; moodEmoji = '😻'; }
+    else if (pct >= 40){ moodWord = 'content'; moodEmoji = '🐱'; }
+    else { moodWord = 'hungry'; moodEmoji = '🙀'; }
+
+    emoji.textContent = moodEmoji;
+    mood.textContent = moodWord;
+    const petMoodRoom = document.getElementById('petMoodRoom');
+    if (petMoodRoom) petMoodRoom.textContent = moodWord;
+
+    if (pct >= 100) caption.textContent = "Miso's bowl is full — nice work today.";
+    else if (pct >= 40) caption.textContent = `${dailyGoal - todayPoints} pts to fill the bowl`;
+    else caption.textContent = 'Clear a few cards to feed Miso';
+
+    emoji.style.transform = 'scale(1.15)';
+    setTimeout(() => { emoji.style.transform = 'scale(1)'; }, 220);
+  }
+
+  function renderRoomUnlocks(){
+    const yarn = document.getElementById('itemYarn');
+    const cushion = document.querySelector('.room-item.cushion');
+    const locked = document.getElementById('itemLocked');
+    if (yarn) yarn.style.opacity = streakDays >= 3 ? '1' : '0.15';
+    if (cushion) cushion.style.opacity = streakDays >= 7 ? '1' : '0.15';
+    if (locked){
+      if (streakDays >= 14){
+        locked.innerHTML = '<span style="font-size:20px">🌿</span>';
+        locked.style.border = '1px solid var(--line)';
+        locked.style.background = 'var(--teal-tint)';
+      } else {
+        locked.querySelector('.lock-label').textContent = `Day 14 · ${streakDays}/14`;
+      }
+    }
+    document.getElementById('petStreak').textContent = streakDays;
+    document.getElementById('streakBig').textContent = streakDays;
+  }
+
+  function spawnHeart(){
+    const layer = document.getElementById('heartsLayer');
+    if (!layer) return;
+    const heart = document.createElement('span');
+    heart.className = 'heart-pop';
+    heart.textContent = '💛';
+    const x = 42 + Math.random() * 20;
+    heart.style.left = x + '%';
+    heart.style.bottom = '38%';
+    layer.appendChild(heart);
+    setTimeout(() => heart.remove(), 1000);
+  }
+
+  function initPetRoom(){
+    const cat = document.getElementById('catFigure');
+    if (!cat) return;
+    cat.addEventListener('click', () => {
+      cat.classList.remove('petted');
+      void cat.offsetWidth;
+      cat.classList.add('petted');
+      spawnHeart();
+      setTimeout(spawnHeart, 120);
+      petsToday++;
+      document.getElementById('petsToday').textContent = petsToday;
+    });
+    document.getElementById('petCardWidget').addEventListener('click', () => {
+      document.querySelector('.tab[data-target="pet"]').click();
+    });
+  }
+
+  function renderLeaderboard(){
+    const board = document.getElementById('leaderboard');
+    const all = [...peers, {name:'You', pts:score, me:true}].sort((a,b) => b.pts - a.pts);
+    board.innerHTML = all.map((p, i) => `
+      <div class="lb-row ${p.me ? 'me' : ''}">
+        <div class="lb-rank">${i + 1}</div>
+        <div class="lb-avatar">${p.me ? 'Y' : p.name[0]}</div>
+        <div class="lb-name">${p.me ? 'You' : p.name}</div>
+        <div class="lb-pts">${p.pts}</div>
+      </div>`).join('');
+  }
+
+  // ---------- progress screen ----------
+  const weekStrip = document.getElementById('weekStrip');
+  const weekPattern = [true, true, true, false, true, true, false]; // Mon..Sun, today = idx 5
+  const todayIdx = 5;
+  ['M','T','W','T','F','S','S'].forEach((d,i) => {
+    const el = document.createElement('div');
+    el.className = 'day-dot' + (weekPattern[i] ? ' done' : '') + (i === todayIdx ? ' today' : '');
+    el.textContent = d;
+    weekStrip.appendChild(el);
+  });
+
+  const heatmap = document.getElementById('heatmap');
+  const heatPattern = "1230213202130123021320213012302132021302130213023102130213021302130213";
+  for (let i = 0; i < 56; i++){
+    const cell = document.createElement('div');
+    const level = heatPattern[i % heatPattern.length];
+    cell.className = 'hcell l' + level;
+    heatmap.appendChild(cell);
+  }
+
+  // ---------- tab navigation ----------
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelector(`.screen[data-screen="${tab.dataset.target}"]`).classList.add('active');
+    });
+  });
+  document.getElementById('goStreak').addEventListener('click', () => {
+    document.querySelector('.tab[data-target="progress"]').click();
+  });
+  document.getElementById('goScore').addEventListener('click', () => {
+    document.querySelector('.tab[data-target="progress"]').click();
+  });
+
+  // ---------- init ----------
+  computeQueue();
+  renderRotationBar();
+  renderCardStack();
+  renderReview();
+  updateBadge();
+  updateStats();
+  updateCat();
+  renderLeaderboard();
+  initPetRoom();
+  renderRoomUnlocks();
+</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "auth": {
+    "providers": {
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Rounds by dailydose.md_",
+        "supportEmail": "dailydose.md.social@gmail.com"
+      }
+    }
+  },
+  "firestore": { "rules": "firestore.rules", "indexes": "firestore.indexes.json" },
+  "emulators": { "auth": { "port": 9099 }, "firestore": { "port": 8089 }, "ui": { "enabled": false }, "singleProjectMode": true },
+  "hosting": {
+    "public": "hosting/public",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "headers": [
+      {
+        "source": "**/*.json",
+        "headers": [
+          { "key": "Access-Control-Allow-Origin", "value": "*" },
+          { "key": "Cache-Control", "value": "no-cache" },
+          { "key": "X-Content-Type-Options", "value": "nosniff" }
+        ]
+      }
+    ],
+    "predeploy": ["npm run admin:build", "node --experimental-strip-types scripts/validate-hosting.mjs"]
+  }
+}
