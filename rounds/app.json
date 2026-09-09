@@ -9,7 +9,11 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/brand/rounds-icon.png",
-      "bundleIdentifier": "com.dailydosemd.rounds"
+      "bundleIdentifier": "com.dailydosemd.rounds",
+      "supportsTablet": false,
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -28,18 +32,18 @@
       "output": "static",
       "favicon": "./assets/brand/rounds-favicon.png"
     },
-   "plugins": [
-  "expo-router",
-  [
-    "expo-splash-screen",
-    {
-      "image": "./assets/brand/rounds-splash.png",
-      "imageWidth": 220,
-      "resizeMode": "contain",
-      "backgroundColor": "#24272F"
-    }
-  ]
-],
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/brand/rounds-splash.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#24272F"
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
