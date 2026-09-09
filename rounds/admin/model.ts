@@ -17,7 +17,7 @@ export function encode(value: unknown) {
   if (new TextEncoder().encode(payload).byteLength > MAX_BYTES) throw Error('The library has reached its current size limit. Export a backup and contact support before adding more.');
   return payload;
 }
-export function freshCard(subjectId: string, id = crypto.randomUUID()): RevisionCard {
+export function freshCard(subjectId: string, id: string = crypto.randomUUID()): RevisionCard {
   return {id,topicId:`topic:${id}`,subjectId,topic:'',title:'',prompt:'',facts:[''],pearl:'',explanation:'',seconds:30,series:'Clinical decision',sample:false,references:[],contentVersion:1,createdAt:null,publishedAt:null,updatedAt:null,difficulty:'unrated',tags:[],relatedCardIds:[],visibility:'draft',editorialStatus:'unreviewed',priority:0};
 }
 export function saveCard(workspace: Workspace, input: RevisionCard, reviewer: string, approved: boolean, now = new Date().toISOString()): Workspace {
