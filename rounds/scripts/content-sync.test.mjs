@@ -112,6 +112,18 @@ test("concurrent refreshes share a request and send only the catalog revision", 
   const [a, b] = await Promise.all([repo.refresh(), repo.refresh()]);
   assert.equal(calls, 1); assert.equal(a, b); assert.equal(a.cards.length, 2);
 });
+test("Firestore document refreshes never add the custom revision query", async () => {
+  const endpoint = "https://firestore.googleapis.com/v1/projects/demo/databases/(default)/documents/published/catalog";
+  const urls = [];
+  const repo = createContentClient({
+    endpoint,
+    timeoutMs: 50,
+    fallback: { load: async () => catalog([]) },
+    fetcher: async url => { urls.push(url); return response(full(2)); },
+  }, storage(JSON.stringify(full())));
+  await repo.refresh();
+  assert.deepEqual(urls, [endpoint]);
+});
 test("a missing delta base retries once with a request for the full catalog", async () => {
   const urls = [];
   const repo = client(storage(JSON.stringify(full())), { fetcher: async url => {
