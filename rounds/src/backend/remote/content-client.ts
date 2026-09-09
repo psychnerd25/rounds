@@ -25,6 +25,7 @@ export function createContentClient(options: RemoteContentOptions, storage: Cont
   const key = options.cacheKey ?? `rounds.content.catalog.v2:${endpoint.href}`;
   const fetcher = options.fetcher ?? fetch;
   const timeoutMs = options.timeoutMs ?? 8000;
+  const supportsRevisionQuery = endpoint.hostname !== "firestore.googleapis.com";
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new Error("Invalid content timeout");
   let snapshot: CatalogSnapshot | null = null;
   let cachedLoad: Promise<Catalog | null> | null = null;
@@ -48,8 +49,10 @@ export function createContentClient(options: RemoteContentOptions, storage: Cont
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
     const url = new URL(endpoint.href);
-    // A static JSON host may ignore this query and always return a full catalog.
-    if (!full && snapshot) url.searchParams.set("since", String(snapshot.revision));
+    // Custom catalog APIs can accept the current revision and return a delta.
+    // Firestore's document GET endpoint only supports its documented query
+    // parameters, so request the full public document there every time.
+    if (supportsRevisionQuery && !full && snapshot) url.searchParams.set("since", String(snapshot.revision));
     else url.searchParams.delete("since");
     try {
       return await Promise.race([
