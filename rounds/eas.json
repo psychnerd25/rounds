@@ -9,13 +9,16 @@
       "distribution": "internal",
       "environment": "development",
       "env": {
-        "EXPO_PUBLIC_PREVIEW_CONTENT_API_URL": "https://rounds-b01c3.web.app/preview-catalog.json"
+        "EXPO_PUBLIC_PREVIEW_CONTENT_API_URL": "https://firestore.googleapis.com/v1/projects/rounds-b01c3/databases/(default)/documents/published/preview"
       }
     },
     "preview": {
       "distribution": "internal",
       "environment": "preview",
-      "android": { "buildType": "apk" }
+      "android": { "buildType": "apk" },
+      "env": {
+        "EXPO_PUBLIC_PREVIEW_CONTENT_API_URL": "https://firestore.googleapis.com/v1/projects/rounds-b01c3/databases/(default)/documents/published/preview"
+      }
     },
     "production": {
       "autoIncrement": true,
