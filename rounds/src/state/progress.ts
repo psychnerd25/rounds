@@ -43,7 +43,7 @@ export const emptyState: StudyState = {
     examDate: null,
     analyticsConsent: false,
     misoBreed: "tuxedo",
-    misoName: "Cat",
+    misoName: "Miso",
   },
   onboarding: { version: 1, completedAt: null, skipped: false },
   analytics: [],
@@ -118,6 +118,7 @@ export function parseState(raw: string | null): StudyState {
           ],
         }
       : paws;
+  const savedPreferences = value.version === 4 ? value.preferences : {};
   return {
     ...emptyState,
     ...(value.version === 4 ? value : {}),
@@ -128,7 +129,8 @@ export function parseState(raw: string | null): StudyState {
     paws: migratedPaws,
     preferences: {
       ...emptyState.preferences,
-      ...(value.version === 4 ? value.preferences : {}),
+      ...savedPreferences,
+      misoName: savedPreferences?.misoName === "Cat" ? "Miso" : (savedPreferences?.misoName ?? emptyState.preferences.misoName),
     },
   };
 }
