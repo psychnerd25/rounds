@@ -46,6 +46,11 @@ export function Onboarding({
             Discover short medical concepts, then recall them before reading the
             answer. A few focused cards are enough to begin.
           </Copy>
+          <Copy style={s.muted}>
+            Rounds is for medical education and revision, not patient-specific
+            diagnosis or treatment. Use current local guidance and clinical
+            supervision for patient care.
+          </Copy>
           <View
             onTouchStart={(e) => {
               touchY.current = e.nativeEvent.pageY;
@@ -112,8 +117,7 @@ export function Onboarding({
           <Copy style={s.muted}>
             Recall is self-assessment, not a scored exam. It is the main way to
             study in Rounds; Read mode is there when you want a first pass.
-            Smart Review brings
-            saved, unfinished and due cards back later.
+            Smart Review brings saved, unfinished and due cards back later.
           </Copy>
           <Button disabled={!rated} onPress={() => setStep(2)}>
             See what studying grows →
