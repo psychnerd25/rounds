@@ -12,7 +12,7 @@ import { Button, Copy, Eyebrow, Panel, useRoundsTheme } from "../components/roun
 export default function Settings() {
   const { s } = useRoundsTheme();
   const study = useStudy(),
-    { cards, subjects, refresh, refreshing, refreshError, lastChecked, remoteEnabled } = useContent(),
+    { subjects, refresh, refreshing, refreshError, lastChecked, remoteEnabled } = useContent(),
     [tour, setTour] = useState(false);
   if (tour) return <Onboarding onFinish={() => setTour(false)} />;
   return (
@@ -57,7 +57,7 @@ export default function Settings() {
         <Copy style={s.muted}>
           {remoteEnabled
             ? "New content is checked when you open the app and while you study. New cards join your next round."
-            : "You’re using the bundled preview library. Content updates aren’t connected yet."}
+            : "You’re using the bundled library. Content updates aren’t connected yet."}
         </Copy>
         {remoteEnabled && <>
           <View accessibilityLiveRegion="polite"><Copy>
@@ -97,15 +97,10 @@ export default function Settings() {
           patient-specific medical advice or replace professional judgment,
           official guidelines or supervision.
         </Copy>
-        {cards.some(card => card.editorialStatus !== "reviewed") && <Copy style={s.muted}>
-          The current content bank is an editorial preview. Clinical references
-          and independent medical review are still pending. It is not a clinical
-          protocol.
-        </Copy>}
       </Panel>
       <View style={{ gap: 8 }}>
         <Attribution />
-        <Eyebrow>{cards.some(card => card.editorialStatus !== "reviewed") ? "Editorial preview" : "Rounds"} · {Constants.expoConfig?.version ?? "1.0.0"}</Eyebrow>
+        <Eyebrow>Rounds · {Constants.expoConfig?.version ?? "1.0.0"}</Eyebrow>
         <Copy style={s.muted}>
           Your study progress stays on this device. No account is required.
         </Copy>
