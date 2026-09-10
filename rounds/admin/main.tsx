@@ -11,6 +11,7 @@ import {
   type User,
 } from './firebase';
 import {
+  deleteCard,
   freshCard,
   importDrafts,
   saveCard,
@@ -90,6 +91,12 @@ function App() {
     });
   }, [library, query]);
 
+  const subjectSuggestions = useMemo(() => {
+    if (!library) return [];
+    return [...new Set(library.workspace.catalog.subjects.map((subject) => subject.name.trim()).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b));
+  }, [library]);
+
   const edit = (card: RevisionCard) => setForm({
     id: card.id,
     subject: library?.workspace.catalog.subjects.find((item) => item.id === card.subjectId)?.name ?? card.subjectId,
@@ -151,11 +158,28 @@ function App() {
       };
       const workspace = saveCard(workspaceForSave, input, '', false);
       await saveWorkspaceToPreview(library, workspace);
-      setStatus(form.id ? 'Card updated.' : 'Card added.');
       reset();
       await reload();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Could not save card.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const remove = async () => {
+    if (!library || !form.id) return;
+    const title = form.title.trim() || 'this card';
+    if (!window.confirm(`Delete “${title}”? This removes it from the live app too.`)) return;
+    setBusy(true);
+    setStatus('Deleting…');
+    try {
+      const workspace = deleteCard(library.workspace, form.id);
+      await saveWorkspaceToPreview(library, workspace);
+      reset();
+      await reload();
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Could not delete card.');
     } finally {
       setBusy(false);
     }
@@ -179,7 +203,6 @@ function App() {
         },
       };
       await saveWorkspaceToPreview(library, workspace);
-      setStatus(`Imported ${imported.count} cards.`);
       await reload();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Could not import CSV.');
@@ -251,11 +274,17 @@ function App() {
 
         <label>Subject
           <input
+            list="subject-options"
+            autoComplete="off"
             value={form.subject}
-            placeholder="e.g. Internal Medicine Floors"
+            placeholder="Start typing or choose an existing subject"
             onChange={(event) => setForm({...form, subject:event.target.value})}
           />
+          <span className="hint">Choose an existing subject suggestion or type a new one.</span>
         </label>
+        <datalist id="subject-options">
+          {subjectSuggestions.map((subject) => <option key={subject} value={subject} />)}
+        </datalist>
 
         <label>Topic Title
           <input value={form.title} onChange={(event) => setForm({...form,title:event.target.value})} />
@@ -274,8 +303,9 @@ function App() {
         </label>
 
         <div className="actions">
-          <button disabled={busy} onClick={() => void save()}>{busy ? 'Saving…' : form.id ? 'Save changes' : 'Add card'}</button>
-          {form.id && <button className="secondary" onClick={reset}>Cancel</button>}
+          <button disabled={busy} onClick={() => void save()}>{busy ? 'Working…' : form.id ? 'Save changes' : 'Add card'}</button>
+          {form.id && <button className="danger" disabled={busy} onClick={() => void remove()}>Delete card</button>}
+          {form.id && <button className="secondary" disabled={busy} onClick={reset}>Cancel</button>}
         </div>
         {status && <p className="status">{status}</p>}
       </section>
@@ -285,7 +315,7 @@ function App() {
 
 const style = document.createElement('style');
 style.textContent = `
-  :root{font-family:Inter,system-ui,sans-serif;color:#24272f;background:#f5f0e7}*{box-sizing:border-box}body{margin:0}button,input,textarea{font:inherit}button,.upload{border:0;border-radius:12px;background:#315f59;color:white;padding:11px 16px;font-weight:700;cursor:pointer}.secondary{background:#ebe3d8;color:#4b4b48}.center{min-height:100vh;display:grid;place-items:center;padding:24px}.shell{max-width:1180px;margin:auto;padding:24px}.card{background:#fffdf8;border:1px solid #dfd7ca;border-radius:22px;box-shadow:0 8px 30px #5d51430b}.login{max-width:440px;padding:34px}.brand{font-family:Georgia,serif;font-size:28px;font-weight:700;color:#315f59}header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.header-actions,.actions{display:flex;gap:10px;align-items:center}.upload input{display:none}.layout{display:grid;grid-template-columns:330px 1fr;gap:20px}.list{padding:18px;min-height:650px}.list-head{display:flex;justify-content:space-between;align-items:center}.list h2{margin:0}.small{padding:8px 11px}.search,input,textarea{width:100%;border:1px solid #d9d1c5;background:white;border-radius:11px;padding:12px;color:#24272f}.search{margin:14px 0}.items{display:flex;flex-direction:column;gap:7px;max-height:550px;overflow:auto}.item{display:flex;flex-direction:column;align-items:flex-start;text-align:left;background:#f6f1e9;color:#292b2f;padding:12px}.item span{font-size:12px;color:#777269;margin-top:4px}.editor{padding:28px;display:flex;flex-direction:column;gap:18px}.editor h1{margin:3px 0 5px;font-family:Georgia,serif}.editor label{display:flex;flex-direction:column;gap:7px;font-weight:700;font-size:13px}.editor textarea{resize:vertical;line-height:1.5}.muted{color:#777269}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:#7d7162;font-weight:800;margin:0}.status{padding:12px;background:#eff4ef;border-radius:10px}.actions{margin-top:4px}@media(max-width:760px){.shell{padding:14px}.layout{grid-template-columns:1fr}.list{min-height:auto}.items{max-height:240px}header{align-items:flex-start;gap:12px;flex-direction:column}.header-actions{width:100%;flex-wrap:wrap}.editor{padding:20px}}
+  :root{font-family:Inter,system-ui,sans-serif;color:#24272f;background:#f5f0e7}*{box-sizing:border-box}body{margin:0}button,input,textarea{font:inherit}button,.upload{border:0;border-radius:12px;background:#315f59;color:white;padding:11px 16px;font-weight:700;cursor:pointer}button:disabled{opacity:.55;cursor:not-allowed}.secondary{background:#ebe3d8;color:#4b4b48}.danger{background:#8f3f36;color:white}.center{min-height:100vh;display:grid;place-items:center;padding:24px}.shell{max-width:1180px;margin:auto;padding:24px}.card{background:#fffdf8;border:1px solid #dfd7ca;border-radius:22px;box-shadow:0 8px 30px #5d51430b}.login{max-width:440px;padding:34px}.brand{font-family:Georgia,serif;font-size:28px;font-weight:700;color:#315f59}header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.header-actions,.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.upload input{display:none}.layout{display:grid;grid-template-columns:330px 1fr;gap:20px}.list{padding:18px;min-height:650px}.list-head{display:flex;justify-content:space-between;align-items:center}.list h2{margin:0}.small{padding:8px 11px}.search,input,textarea{width:100%;border:1px solid #d9d1c5;background:white;border-radius:11px;padding:12px;color:#24272f}.search{margin:14px 0}.items{display:flex;flex-direction:column;gap:7px;max-height:550px;overflow:auto}.item{display:flex;flex-direction:column;align-items:flex-start;text-align:left;background:#f6f1e9;color:#292b2f;padding:12px}.item span{font-size:12px;color:#777269;margin-top:4px}.editor{padding:28px;display:flex;flex-direction:column;gap:18px}.editor h1{margin:3px 0 5px;font-family:Georgia,serif}.editor label{display:flex;flex-direction:column;gap:7px;font-weight:700;font-size:13px}.editor textarea{resize:vertical;line-height:1.5}.hint{font-size:11px;color:#777269;font-weight:400}.muted{color:#777269}.eyebrow{text-transform:uppercase;letter-spacing:.12em;font-size:11px;color:#7d7162;font-weight:800;margin:0}.status{padding:12px;background:#eff4ef;border-radius:10px}.actions{margin-top:4px}@media(max-width:760px){.shell{padding:14px}.layout{grid-template-columns:1fr}.list{min-height:auto}.items{max-height:240px}header{align-items:flex-start;gap:12px;flex-direction:column}.header-actions{width:100%;flex-wrap:wrap}.editor{padding:20px}}
 `;
 document.head.appendChild(style);
 createRoot(document.getElementById('root')!).render(<App />);
