@@ -34,6 +34,15 @@ export function saveCard(workspace: Workspace, input: RevisionCard, reviewer: st
   encode(next);
   return next;
 }
+export function deleteCard(workspace: Workspace, id: string): Workspace {
+  if (!workspace.catalog.cards.some(card => card.id === id)) throw Error('Card not found. Refresh and try again.');
+  const cards = workspace.catalog.cards.filter(card => card.id !== id);
+  const approvals = {...workspace.approvals};
+  delete approvals[id];
+  const next = {catalog:catalogWithCards(workspace.catalog.subjects,cards),approvals};
+  encode(next);
+  return next;
+}
 export function publication(library: Library, ids: string[], now = new Date().toISOString()) {
   if (!ids.length) throw Error('Choose at least one reviewed card to publish.');
   const workspace = structuredClone(library.workspace);
