@@ -1,4 +1,5 @@
-export function resolveContentConfig(development: boolean, reviewedUrl?: string, previewUrl?: string) {
-  const preview = development ? previewUrl?.trim() : undefined;
-  return { endpoint: preview || reviewedUrl?.trim() || undefined, allowPreview: !!preview };
+export function resolveContentConfig(development: boolean, publicUrl?: string, previewUrl?: string) {
+  const published = publicUrl?.trim() || undefined;
+  const preview = development && !published ? previewUrl?.trim() || undefined : undefined;
+  return { endpoint: published || preview, allowPreview: !!preview };
 }
