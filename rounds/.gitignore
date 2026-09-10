@@ -29,9 +29,10 @@ serviceAccount*.json
 *service-account*.json
 credentials*.json
 
-# Firebase local state / logs
+# Firebase local state / generated hosting output / logs
 .firebase/
 firebase-debug*.log
+hosting/public/admin/
 hosting/public/*.tmp
 
 # Debug logs
