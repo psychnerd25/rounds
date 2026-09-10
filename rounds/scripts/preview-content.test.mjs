@@ -31,12 +31,14 @@ test("preview still rejects silent teaching changes and stale revisions", () => 
   assert.equal(merged.channel, "preview");
   assert.throws(() => mergeCatalogUpdate(merged, current, { allowPreview: true }), /Stale/);
 });
-test("production composition ignores the preview URL even if it is configured", () => {
+test("public content wins whenever configured; preview is development fallback only", () => {
   assert.deepEqual(resolveContentConfig(false, "", "https://example.org/preview.json"), { endpoint: undefined, allowPreview: false });
   assert.deepEqual(resolveContentConfig(false, "https://example.org/catalog.json", "https://example.org/preview.json"),
     { endpoint: "https://example.org/catalog.json", allowPreview: false });
   assert.deepEqual(resolveContentConfig(true, "", "https://example.org/preview.json"),
     { endpoint: "https://example.org/preview.json", allowPreview: true });
+  assert.deepEqual(resolveContentConfig(true, "https://example.org/catalog.json", "https://example.org/preview.json"),
+    { endpoint: "https://example.org/catalog.json", allowPreview: false });
 });
 test("preview client caches labelled content; default client rejects that same cache and network payload", async () => {
   let value = null;
