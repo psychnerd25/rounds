@@ -27,6 +27,11 @@
       "env": {
         "EXPO_PUBLIC_CONTENT_API_URL": "https://firestore.googleapis.com/v1/projects/rounds-b01c3/databases/(default)/documents/published/catalog"
       }
+    },
+    "production-apk": {
+      "extends": "production",
+      "distribution": "internal",
+      "android": { "buildType": "apk" }
     }
   },
   "submit": {
